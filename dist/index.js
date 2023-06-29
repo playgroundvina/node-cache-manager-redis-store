@@ -46,56 +46,61 @@ var redisStore = function redisStore() {
       for (var _len = arguments.length, args = new Array(_len), _key = 0; _key < _len; _key++) {
         args[_key] = arguments[_key];
       }
-
+  
       var self = this;
       return new Promise(function (resolve, reject) {
         var cb;
         var options = {};
-
+        var data = [];
+  
         if (typeof args[args.length - 1] === 'function') {
           cb = args.pop();
         }
-
+  
         if (args[args.length - 1] instanceof Object && args[args.length - 1].constructor === Object) {
           options = args.pop();
         }
-
+  
+        if (args[args.length - 1] instanceof Array && args[args.length - 1].constructor === Array) {
+          data = args.shift();
+        }
+  
         if (!cb) {
           cb = function cb(err, result) {
             return err ? reject(err) : resolve(result);
           };
         }
-
+  
         var ttl = options.ttl || options.ttl === 0 ? options.ttl : storeArgs.ttl;
         var multi;
-
+  
         if (ttl) {
           multi = redisCache.multi();
         }
-
+  
         var key;
         var value;
         var parsed = [];
-
-        for (var i = 0; i < args.length; i += 2) {
-          key = args[i];
-          value = args[i + 1];
+  
+        for (var i = 0; i < data.length; i += 2) {
+          key = data[i];
+          value = data[i + 1];
           /**
            * Make sure the value is cacheable
            */
-
+  
           if (!self.isCacheableValue(value)) {
             return cb(new Error("\"".concat(value, "\" is not a cacheable value")));
           }
-
+  
           value = JSON.stringify(value) || '"undefined"';
           parsed.push.apply(parsed, [key, value]);
-
+  
           if (ttl) {
             multi.setex(key, ttl, value);
           }
         }
-
+  
         if (ttl) {
           multi.exec(handleResponse(cb));
         } else {
