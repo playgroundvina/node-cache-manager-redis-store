@@ -86,7 +86,7 @@ var redisStore = function redisStore() {
           key = data[i];
           value = data[i + 1];
           /**
-           * Make sure the value is cacheable
+           * Make sure the value is cacheable [custom]
            */
   
           if (!self.isCacheableValue(value)) {
